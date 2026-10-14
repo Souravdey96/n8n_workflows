@@ -1,0 +1,181 @@
+{
+  "name": "Daily n8n Workflow Backup to GitHub",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 2
+            }
+          ]
+        }
+      },
+      "id": "123a2b9b-19ae-4df4-8f6f-354086bd93fa",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.github.com/user/repos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"name\":\"n8n-workflow-backups\",\"private\":false,\"auto_init\":true,\"description\":\"Automated n8n workflow backups\"}",
+        "options": {}
+      },
+      "id": "b141613e-7f72-4d8d-861d-b9190acd4de5",
+      "name": "Create Backup Repository",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "executeOnce": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "filters": {},
+        "requestOptions": {}
+      },
+      "id": "8027e002-f9a4-4643-b943-2e7f7dbefc34",
+      "name": "Get All Workflows",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select your GitHub username"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "n8n-workflow-backups"
+        },
+        "filePath": "=backups/{{ $('Get All Workflows').item.json.name.toLowerCase().replace(/ /g, '-') }}.json",
+        "fileContent": "={{ JSON.stringify($('Get All Workflows').item.json, null, 2) }}",
+        "commitMessage": "=Backup {{ $('Get All Workflows').item.json.name }} ({{ $now.toFormat('yyyy-MM-dd') }})"
+      },
+      "id": "2e5da6f8-4ea6-44b5-a549-11c5bdff885d",
+      "name": "Update Backup File",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        0
+      ],
+      "webhookId": "03bdc2ec-eb24-4f41-8cdb-12f38d5d278a",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select your GitHub username"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "n8n-workflow-backups"
+        },
+        "filePath": "=backups/{{ $('Get All Workflows').item.json.name.toLowerCase().replace(/ /g, '-') }}.json",
+        "fileContent": "={{ JSON.stringify($('Get All Workflows').item.json, null, 2) }}",
+        "commitMessage": "=Backup {{ $('Get All Workflows').item.json.name }} ({{ $now.toFormat('yyyy-MM-dd') }})"
+      },
+      "id": "bfd9158d-4029-4477-9159-02f724ced4e9",
+      "name": "Create Backup File",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        0
+      ],
+      "webhookId": "37163d19-da0d-4958-80f7-76cd0f1f9859"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Create Backup Repository",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Backup Repository": {
+      "main": [
+        [
+          {
+            "node": "Get All Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Workflows": {
+      "main": [
+        [
+          {
+            "node": "Update Backup File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Backup File": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Create Backup File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ac49178d-2f13-4629-9626-1441302bbf00",
+  "meta": {
+    "instanceId": "2d6d8670392a786095b77283256f139845252e1c039a3f9ec17052be01d84af2"
+  },
+  "nodeGroups": [],
+  "id": "uExIokRk8qIJ8Hw3",
+  "tags": []
+}
